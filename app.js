@@ -2,18 +2,23 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const path = require('path');
+const helmet = require('helmet');
+
 
 const saucesRoutes = require('./routes/sauce');
 const userRoutes = require('./routes/user');
 
+require('dotenv').config();
+const app = express();
 
-mongoose.connect('mongodb+srv://elizavetaruss:Sebastiennegro@cluster0.5txaj.mongodb.net/myFirstDatabase?retryWrites=true&w=majority',
+mongoose.connect(process.env.MONGO_URL,
   { useNewUrlParser: true,
     useUnifiedTopology: true })
   .then(() => console.log('Connexion à MongoDB réussie !'))
   .catch(() => console.log('Connexion à MongoDB échouée !'));
 
-  const app = express();
+  
+  app.use(helmet());
 
 
   app.use((req, res, next) => {
