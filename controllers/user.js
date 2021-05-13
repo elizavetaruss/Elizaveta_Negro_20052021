@@ -1,26 +1,13 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
-const MaskData = require('maskdata');
-const maskEmailOptions = {
-  maskWith: "*",
-  unmaskedStartCharacters: 1,
-  unmaskedEndCharacters: 2,
-  maskAtTheRate: false,
-  unmaskedStartCharactersBeforeAt: 1,
-  unmaskedEndCharactersAfterAt: 3,
-  
-};
-
 const User = require('../models/User');
 
 exports.signup = (req, res, next) => {
-    const email = req.body.email;
-    const maskedEmail = MaskData.maskEmail2(email, maskEmailOptions);
     bcrypt.hash(req.body.password, 10)
       .then(hash => {
         const user = new User({
-          email: maskedEmail,
+          email: req.body.email,
           password: hash
         });
         user.save()
@@ -31,23 +18,21 @@ exports.signup = (req, res, next) => {
   };
 
   exports.login = (req, res, next) => {
-    const email = req.body.email;
-    const maskedEmail = MaskData.maskEmail2(email, maskEmailOptions);
-    User.findOne({ email: maskedEmail })
+    User.findOne({ email: req.body.email })
       .then(user => {
         if (!user) {
-          return res.status(401).json({ error: 'Utilisateur non trouvé !' });
+          return res.status(401).json({ error: 'Login ou Mot de passe incorrect' });
         }
         bcrypt.compare(req.body.password, user.password)
           .then(valid => {
             if (!valid) {
-              return res.status(401).json({ error: 'Mot de passe incorrect !' });
+              return res.status(401).json({ error: 'Login ou Mot de passe incorrect' });
             }
             res.status(200).json({
               userId: user._id,
               token: jwt.sign(
                 { userId: user._id },
-                'RANDOM_TOKEN_SECRET',
+                 process.env.JWT_SECRET,
                 { expiresIn: '24h' }
               )
             });
